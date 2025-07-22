@@ -1,0 +1,16 @@
+services:
+  app:
+    # カレントディレクトリのDockerfileを使ってイメージをビルド
+    build: .
+    # ポートのマッピング（PCの3000番ポートをコンテナの3000番ポートに繋ぐ）
+    ports:
+      - '3000:3000'
+    # ボリュームのマッピング（PCのコードをコンテナに同期させる）
+    volumes:
+      - .:/app
+      # node_modulesは同期させない（コンテナ内のものを優先）
+      - /app/node_modules
+    # 開発サーバーを起動するコマンドに上書き
+    command: npm run dev
+    environment:
+      - WATCHPACK_POLLING=true
