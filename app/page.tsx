@@ -19,7 +19,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 type Note = {
-  id: bigint;
+  id: number;
   title: string;
   content: string;
   createdAt: string;
@@ -39,7 +39,7 @@ const addNote = async (newNote: { title: string; content: string }) => {
   });
 };
 
-const deleteNote = async (noteId: bigint) => {
+const deleteNote = async (noteId: number) => {
   await fetch(`api/notes/${noteId}`, {
     method: 'DELETE',
   });

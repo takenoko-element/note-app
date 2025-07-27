@@ -12,9 +12,9 @@ interface Params {
 export const PUT = async (req: Request, { params }: Params) => {
   try {
     const dummyUserId = '1';
-    const { id } = params;
+    const { id } = await params;
     const body: { title: string; content: string } = await req.json();
-    const updateTodo = await updateNote(BigInt(id), dummyUserId, body);
+    const updateTodo = await updateNote(parseInt(id), dummyUserId, body);
     return NextResponse.json(updateTodo, { status: 200 });
   } catch (error) {
     if (error instanceof Error) {
@@ -45,9 +45,9 @@ export const PUT = async (req: Request, { params }: Params) => {
 export const DELETE = async (req: Request, { params }: Params) => {
   try {
     const dummyUserId = '1';
-    const { id } = params;
-    await deleteNote(BigInt(id), dummyUserId);
-    return NextResponse.json(null, { status: 204 });
+    const { id } = await params;
+    await deleteNote(parseInt(id), dummyUserId);
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('[DELETE api/notes] APIリクエストに失敗しました。:', error);
     if (error instanceof Error) {
