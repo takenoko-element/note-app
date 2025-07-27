@@ -4,6 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import {
   Card,
   CardContent,
@@ -39,6 +40,20 @@ const addNote = async (newNote: { title: string; content: string }) => {
   });
 };
 
+const updateNote = async (updateNote: {
+  id: number;
+  title: string;
+  content: string;
+}) => {
+  const { id, title, content } = updateNote;
+  const res = await fetch(`api/notes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, content }),
+  });
+  if (!res.ok) throw new Error('ノートの編集に失敗しました。');
+};
+
 const deleteNote = async (noteId: number) => {
   await fetch(`api/notes/${noteId}`, {
     method: 'DELETE',
@@ -49,6 +64,10 @@ const NotePage = () => {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [editingContent, setEditingContent] = useState('');
 
   const {
     data: notes,
@@ -63,6 +82,24 @@ const NotePage = () => {
     mutationFn: addNote,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
+      toast.success('ノートの作成に成功しました。');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('ノートの作成に失敗しました。');
+    },
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: updateNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      setEditingNoteId(null);
+      toast.success('ノートを更新しました。');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('ノートの更新に失敗しました。');
     },
   });
 
@@ -70,15 +107,53 @@ const NotePage = () => {
     mutationFn: deleteNote,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
+      toast.success('ノートを削除しました。');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('ノートの削除に失敗しました。');
     },
   });
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title.trim() || !content.trim()) return;
+    if (!title.trim()) {
+      toast.error('タイトルの入力は必須です。');
+      return;
+    }
+    if (!content.trim()) {
+      toast.error('コンテンツの入力は必須です。');
+      return;
+    }
     addNoteMutation.mutate({ title, content });
     setTitle('');
     setContent('');
+  };
+
+  const handleEditClick = (note: Note) => {
+    setEditingNoteId(note.id);
+    setEditingTitle(note.title);
+    setEditingContent(note.content);
+  };
+
+  const handleCancelClick = () => {
+    setEditingNoteId(null);
+  };
+
+  const handleSaveClick = (noteId: number) => {
+    if (!editingTitle.trim()) {
+      toast.error('タイトルの入力は必須です。');
+      return;
+    }
+    if (!editingContent.trim()) {
+      toast.error('コンテンツの入力は必須です。');
+      return;
+    }
+    updateNoteMutation.mutate({
+      id: noteId,
+      title: editingTitle,
+      content: editingContent,
+    });
   };
 
   if (isLoading) return <div className="text-center p-10">読み込み中...</div>;
@@ -126,26 +201,73 @@ const NotePage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {notes?.map((note) => (
           <Card key={note.id.toString()}>
-            <CardHeader>
-              <CardTitle>{note.title}</CardTitle>
-              <CardDescription>
-                {new Date(note.createdAt).toLocaleString('ja-JP')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-wrap">{note.content}</p>
-            </CardContent>
-            <CardFooter>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => deleteNoteMutation.mutate(note.id)}
-                disabled={deleteNoteMutation.isPending}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                削除
-              </Button>
-            </CardFooter>
+            {editingNoteId === note.id ? (
+              // ----- 編集モード -----
+              <>
+                <CardHeader>
+                  <Input
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    disabled={updateNoteMutation.isPending}
+                    className="text-lg font-bold"
+                  />
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    disabled={updateNoteMutation.isPending}
+                    className="whitespace-pre-wrap min-h-[100px]"
+                  />
+                </CardContent>
+                <CardFooter className="flex justify-end space-x-2">
+                  <Button variant="ghost" size="sm" onClick={handleCancelClick}>
+                    キャンセル
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSaveClick(note.id)}
+                    disabled={updateNoteMutation.isPending}
+                  >
+                    {updateNoteMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    保存
+                  </Button>
+                </CardFooter>
+              </>
+            ) : (
+              <>
+                <CardHeader>
+                  <CardTitle>{note.title}</CardTitle>
+                  <CardDescription>
+                    {new Date(note.createdAt).toLocaleString('ja-JP')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="whitespace-pre-wrap">{note.content}</p>
+                </CardContent>
+                <CardFooter className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditClick(note)}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    編集
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => deleteNoteMutation.mutate(note.id)}
+                    disabled={deleteNoteMutation.isPending}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    削除
+                  </Button>
+                </CardFooter>
+              </>
+            )}
           </Card>
         ))}
       </div>
