@@ -31,7 +31,7 @@ export const createNote = async (
 
 // ノートを編集
 export const updateNote = async (
-  id: bigint,
+  id: number,
   userId: string,
   data: { title: string; content: string },
 ) => {
@@ -58,10 +58,11 @@ export const updateNote = async (
 };
 
 // ノートを削除
-export const deleteNote = async (id: bigint, userId: string) => {
+export const deleteNote = async (id: number, userId: string) => {
   // ユーザーの確認処理
   const note = await prisma.note.findUnique({ where: { id } });
   if (!note || note.userId !== userId) {
+    console.error('userID:', note?.userId);
     throw new Error('削除権限のないノートです。');
   }
 
