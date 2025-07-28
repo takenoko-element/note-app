@@ -1,7 +1,7 @@
 // app/page.tsx
 import { getAllNotes } from '@/lib/noteService';
 import { NoteContainer } from './NoteContainer';
-import { Note } from './hooks/useNotes';
+import { Note } from '@/types';
 
 const NotePage = async () => {
   const notesFromDb = await getAllNotes('1');
