@@ -50,7 +50,7 @@ const deleteNote = async (noteId: number) => {
 };
 
 // カスタムフック本体
-export const useNotes = () => {
+export const useNotes = (initialNotes?: Note[]) => {
   const queryClient = useQueryClient();
 
   const {
@@ -60,6 +60,7 @@ export const useNotes = () => {
   } = useQuery<Note[]>({
     queryKey: ['notes'],
     queryFn: fetchNotes,
+    initialData: initialNotes,
   });
 
   const addNoteMutation = useMutation({
