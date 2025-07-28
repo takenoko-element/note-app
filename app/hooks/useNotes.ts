@@ -1,13 +1,7 @@
 // app/hooks/useNotes.ts
+import { Note } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-
-export type Note = {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-};
 
 const fetchNotes = async (): Promise<Note[]> => {
   const res = await fetch('api/notes');

@@ -1,8 +1,9 @@
 // app/NoteContainer.tsx
 'use client';
 
+import { Note } from '@/types';
 import { NewNoteForm } from '@/components/notes/NewNoteForm';
-import { Note, useNotes } from './hooks/useNotes';
+import { useNotes } from './hooks/useNotes';
 import { NoteCard } from '@/components/notes/NoteCard';
 
 type NoteContainerProps = {

@@ -16,7 +16,7 @@ import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
 
-import { Note } from '@/app/hooks/useNotes';
+import { Note } from '@/types';
 
 type NoteCardProps = {
   note: Note;
