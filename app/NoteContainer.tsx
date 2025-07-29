@@ -3,7 +3,6 @@
 
 import { Note } from '@/types';
 import { NewNoteForm } from '@/components/notes/NewNoteForm';
-import { useNotes } from './hooks/useNotes';
 import { NoteCard } from '@/components/notes/NoteCard';
 
 type NoteContainerProps = {
@@ -11,40 +10,12 @@ type NoteContainerProps = {
 };
 
 export const NoteContainer = ({ initialNotes }: NoteContainerProps) => {
-  const {
-    notes,
-    isLoading,
-    isError,
-    addNote,
-    isAdding,
-    updateNote,
-    isUpdating,
-    deleteNote,
-    isDeleting,
-  } = useNotes(initialNotes);
-
-  if (isLoading) return <div className="text-center p-10">読み込み中...</div>;
-  if (isError)
-    return (
-      <div className="text-center p-10 text-red-500">
-        エラーが発生しました。
-      </div>
-    );
-
   return (
     <>
-      <NewNoteForm addNote={addNote} isAdding={isAdding} />
-
+      <NewNoteForm />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {notes?.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note}
-            updateNote={updateNote}
-            isUpdating={isUpdating}
-            deleteNote={deleteNote}
-            isDeleting={isDeleting}
-          />
+        {initialNotes.map((note) => (
+          <NoteCard key={note.id} note={note} />
         ))}
       </div>
     </>
