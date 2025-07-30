@@ -1,4 +1,4 @@
-// components/notes/NoteCard.tsx
+// app/components/notes/NoteCard.tsx
 'use client';
 
 import { useState } from 'react';
@@ -13,49 +13,43 @@ import {
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Loader2, Pencil, Trash2 } from 'lucide-react';
 
 import { Note } from '@/types';
-import { deleteNoteAction, updateNoteAction } from '@/app/actions';
-import { toast } from 'sonner';
 
 type NoteCardProps = {
   note: Note;
+  updateNote: (variables: { id: number; formData: FormData }) => void;
+  isUpdating: boolean;
+  deleteNote: (id: number) => void;
+  isDeleting: boolean;
 };
 
-export const NoteCard = ({ note }: NoteCardProps) => {
+export const NoteCard = ({
+  note,
+  updateNote,
+  isUpdating,
+  deleteNote,
+  isDeleting,
+}: NoteCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
-
-  const handleUpdate = async (formData: FormData) => {
-    const result = await updateNoteAction(note.id, formData);
-
-    if ('error' in result) {
-      toast.error(result.error);
-    } else {
-      toast.success('ノートを更新しました。');
-      setIsEditing(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    // 確認ダイアログなどをここに挟んでも良い
-    const result = await deleteNoteAction(note.id);
-    if ('error' in result) {
-      toast.error(result.error);
-    } else {
-      toast.success('ノートを削除しました。');
-    }
-  };
 
   if (isEditing) {
     return (
       <Card className="flex flex-col h-full">
-        <form action={handleUpdate}>
+        <form
+          action={(formData) => {
+            updateNote({ id: note.id, formData });
+            setIsEditing(false); // オプティミスティックアップデートがUIを即時更新するため、ここで呼んでも良い
+          }}
+          className="flex flex-col flex-grow"
+        >
           <CardHeader>
             <Input
               name="title"
               defaultValue={note.title}
               className="text-lg font-bold"
+              disabled={isUpdating}
               required
             />
           </CardHeader>
@@ -64,18 +58,21 @@ export const NoteCard = ({ note }: NoteCardProps) => {
               name="content"
               defaultValue={note.content}
               className="whitespace-pre-wrap min-h-[100px]"
+              disabled={isUpdating}
               required
             />
           </CardContent>
-          <CardFooter className="flex justify-end space-x-2 items-center">
+          <CardFooter className="flex justify-end space-x-2">
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={() => setIsEditing(false)}
             >
               キャンセル
             </Button>
-            <Button size="sm" type="submit">
+            <Button type="submit" size="sm" disabled={isUpdating}>
+              {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存
             </Button>
           </CardFooter>
@@ -96,12 +93,23 @@ export const NoteCard = ({ note }: NoteCardProps) => {
         <p className="whitespace-pre-wrap">{note.content}</p>
       </CardContent>
       <CardFooter className="flex justify-end space-x-2 items-center">
-        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsEditing(true)}
+          disabled={isDeleting}
+        >
           <Pencil className="mr-2 h-4 w-4" />
           編集
         </Button>
-        <form action={handleDelete}>
-          <Button variant="destructive" size="sm">
+        <form action={() => deleteNote(note.id)}>
+          <Button
+            variant="destructive"
+            size="sm"
+            type="submit"
+            disabled={isDeleting}
+          >
+            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             <Trash2 className="mr-2 h-4 w-4" />
             削除
           </Button>
