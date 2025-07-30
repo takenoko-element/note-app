@@ -1,4 +1,3 @@
 // types/index.ts
 export * from './user';
 export * from './note';
-export * from './action';
