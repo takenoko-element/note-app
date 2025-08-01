@@ -2,7 +2,6 @@
 'use server';
 
 import { createNote, deleteNote, updateNote } from '@/lib/noteService';
-import { ActionResult } from '@/types';
 
 // 新規作成アクション
 export const createNoteAction = async (formData: FormData) => {

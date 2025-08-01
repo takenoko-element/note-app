@@ -4,6 +4,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Providers from '@/app/components/Providers';
 import { Toaster } from 'sonner';
+import { Auth0Provider } from '@auth0/nextjs-auth0';
+import { UserProfile } from './components/auth/UserProfile';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,12 +21,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={inter.className}>
-        <Providers>
-          {children}
-          <Toaster richColors />
-        </Providers>
-      </body>
+      <Auth0Provider>
+        <body className={inter.className}>
+          <Providers>
+            <header className="p-4 flex justify-between items-center border-b">
+              <h1 className="text-2xl font-bold">Note App</h1>
+              <UserProfile />
+            </header>
+            {children}
+            <Toaster richColors />
+          </Providers>
+        </body>
+      </Auth0Provider>
     </html>
   );
 }
