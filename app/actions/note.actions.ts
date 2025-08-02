@@ -1,4 +1,4 @@
-// app/actions.ts
+// app/actions/note.actions.ts
 'use server';
 
 import { createNote, deleteNote, updateNote } from '@/lib/noteService';
