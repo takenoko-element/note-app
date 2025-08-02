@@ -7,7 +7,7 @@ import {
   createNoteAction,
   deleteNoteAction,
   updateNoteAction,
-} from '../actions';
+} from '../actions/note.actions';
 import { toast } from 'sonner';
 
 const fetchNotes = async (): Promise<Note[]> => {
