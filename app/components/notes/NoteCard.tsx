@@ -42,7 +42,7 @@ export const NoteCard = ({
             updateNote({ id: note.id, formData });
             setIsEditing(false); // オプティミスティックアップデートがUIを即時更新するため、ここで呼んでも良い
           }}
-          className="flex flex-col flex-grow"
+          className="flex flex-col flex-grow gap-4"
         >
           <CardHeader>
             <Input
