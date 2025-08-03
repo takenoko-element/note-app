@@ -1,10 +1,10 @@
 // app/page.tsx
-import { getAllNotes } from '@/lib/noteService';
 import { NoteContainer } from './NoteContainer';
 import { Note } from '@/types';
+import { getAllNotesAction } from './actions/note.actions';
 
 const NotePage = async () => {
-  const notesFromDb = await getAllNotes('1');
+  const notesFromDb = await getAllNotesAction();
   const initialNotes: Note[] = notesFromDb.map((note) => ({
     ...note,
     createdAt: note.createdAt.toISOString(),
