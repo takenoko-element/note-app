@@ -6,18 +6,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createNoteAction,
   deleteNoteAction,
+  getAllNotesAction,
   updateNoteAction,
 } from '../actions/note.actions';
 import { toast } from 'sonner';
 
-const fetchNotes = async (): Promise<Note[]> => {
-  const res = await fetch('api/notes');
-  if (!res.ok)
-    throw new Error('[useNotes : fetchNote] ノートの取得に失敗しました。');
-  return res.json();
-};
-
-// カスタムフック本体
 export const useNotes = (initialNotes?: Note[]) => {
   const queryClient = useQueryClient();
 
@@ -28,8 +21,15 @@ export const useNotes = (initialNotes?: Note[]) => {
     isError,
   } = useQuery<Note[]>({
     queryKey: ['notes'],
-    queryFn: fetchNotes,
+    queryFn: async () => {
+      const notesFromDb = await getAllNotesAction();
+      return notesFromDb.map((note) => ({
+        ...note,
+        createdAt: new Date(note.createdAt).toISOString(),
+      }));
+    },
     initialData: initialNotes,
+    staleTime: 60 * 1000, // ページマウント直後の不要な再フェッチを防ぐ(1分)
   });
 
   // ノート作成処理
