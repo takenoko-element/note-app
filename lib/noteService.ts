@@ -1,5 +1,7 @@
 // app/lib/noteService.ts
 import prisma from '@/lib/prisma';
+import { auth0 } from './auth0';
+import { findOrCreateUser } from './userService';
 
 // ノートを全件取得
 export const getAllNotes = async (userId: string) => {
@@ -20,6 +22,17 @@ export const createNote = async (
   if (!data.content.trim()) {
     throw new Error('コンテンツの入力は必須です。');
   }
+
+  const session = await auth0.getSession();
+  const user = session?.user;
+  if (user && user.sub && user.email) {
+    await findOrCreateUser({
+      id: user.sub,
+      email: user.email,
+      name: user.name,
+    });
+  }
+
   return await prisma.note.create({
     data: {
       title: data.title,
