@@ -4,6 +4,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { auth0 } from '@/lib/auth0';
+import { Skeleton } from '@/app/components/ui/skeleton';
+import AiSummary from '../components/AiSummary';
+import { Suspense } from 'react';
 
 type detailPageProps = {
   params: {
@@ -28,6 +31,18 @@ export const generateMetadata = async ({
   return {
     title: note ? `${note.title} | Note App` : 'ノートが見つかりません',
   };
+};
+
+const AiSummarySkeleton = () => {
+  return (
+    <div className="mt-8 p-4 bg-gray-50 border rounded-lg">
+      <h3 className="text-lg font-semibold text-gray-800 mb-2">AIによる要約</h3>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-[80%]" />
+      </div>
+    </div>
+  );
 };
 
 const NoteDetailPage = async ({ params }: detailPageProps) => {
@@ -64,6 +79,9 @@ const NoteDetailPage = async ({ params }: detailPageProps) => {
           {note.content}
         </p>
       </div>
+      <Suspense fallback={<AiSummarySkeleton />}>
+        <AiSummary content={note.content} />
+      </Suspense>
     </main>
   );
 };
