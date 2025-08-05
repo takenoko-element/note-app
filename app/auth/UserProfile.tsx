@@ -1,4 +1,4 @@
-// app/components/auth/UserProfile.tsx
+// app/auth/UserProfile.tsx
 import { auth0 } from '@/lib/auth0';
 import { UserProfileClient } from './UserProfileClient';
 

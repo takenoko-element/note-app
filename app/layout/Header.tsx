@@ -1,4 +1,4 @@
-// app/components/layout/Header.tsx
+// app/layout/Header.tsx
 import { UserProfile } from '@/app/auth/UserProfile';
 import Link from 'next/link';
 

@@ -1,3 +1,4 @@
+// app/notes/[id]/page.tsx
 import { getNoteById } from '@/lib/noteService';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';

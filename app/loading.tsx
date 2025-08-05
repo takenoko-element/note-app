@@ -1,3 +1,4 @@
+// app/loading.tsx
 import { Loader2 } from 'lucide-react';
 
 const Loading = () => {

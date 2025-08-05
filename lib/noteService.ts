@@ -63,7 +63,7 @@ export const createNote = async (
 export const updateNote = async (
   id: number,
   userId: string,
-  data: { title: string; content: string; imageUrl?: string },
+  data: { title: string; content: string; imageUrl?: string | null },
 ) => {
   if (!data.title.trim()) {
     throw new Error('タイトルの入力は必須です。');

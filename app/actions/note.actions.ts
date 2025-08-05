@@ -71,9 +71,26 @@ export const updateNoteAction = async (id: number, formData: FormData) => {
   const content = formData.get('content') as string;
   const file = formData.get('image') as File | null;
 
-  const imageUrl = await saveImageAndGetUrl(file);
+  const imageAction = formData.get('imageAction') as
+    | 'keep'
+    | 'clear'
+    | 'update';
 
-  await updateNote(id, userId, { title, content, imageUrl });
+  const updateData: {
+    title: string;
+    content: string;
+    imageUrl?: string | null;
+  } = {
+    title,
+    content,
+  };
+  if (imageAction === 'clear') {
+    updateData.imageUrl = null;
+  } else if (imageAction === 'update' && file && file.size > 0) {
+    updateData.imageUrl = await saveImageAndGetUrl(file);
+  }
+
+  await updateNote(id, userId, updateData);
 };
 
 // 削除アクション

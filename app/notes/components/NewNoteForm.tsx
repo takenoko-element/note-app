@@ -1,4 +1,4 @@
-// app/components/notes/NewNoteForm.tsx
+// app/notes/components/NewNoteForm.tsx
 'use client';
 
 import { useRef } from 'react';

@@ -1,4 +1,4 @@
-// app/components/auth/UserProfileClient.tsx
+// app/auth/UserProfileClient.tsx
 'use client';
 
 import { useState, useTransition } from 'react';
