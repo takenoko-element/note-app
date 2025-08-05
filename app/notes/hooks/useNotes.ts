@@ -1,4 +1,4 @@
-// app/hooks/useNotes.ts
+// app/notes/hooks/useNotes.ts
 'use client';
 
 import { Note } from '@/types';

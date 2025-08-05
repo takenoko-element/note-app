@@ -1,4 +1,4 @@
-// app/components/notes/NewNoteForm.tsx
+// app/notes/components/NewNoteForm.tsx
 'use client';
 
 import { useRef } from 'react';
@@ -48,6 +48,19 @@ export const NewNoteForm = ({ addNote, isAdding }: NewNoteFormProps) => {
             disabled={isAdding}
             required
           />
+          <div>
+            <label htmlFor="image" className="text-sm font-medium">
+              画像
+            </label>
+            <Input
+              id="image"
+              name="image"
+              type="file"
+              accept="image/*"
+              disabled={isAdding}
+              className="mt-1"
+            />
+          </div>
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={isAdding}>

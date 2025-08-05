@@ -1,3 +1,4 @@
+// app/notes/[id]/error.tsx
 'use client';
 
 import { useEffect } from 'react';

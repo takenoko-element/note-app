@@ -1,3 +1,4 @@
+// app/notes/[id]/page.tsx
 import { getNoteById } from '@/lib/noteService';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -7,6 +8,7 @@ import { auth0 } from '@/lib/auth0';
 import { Skeleton } from '@/app/components/ui/skeleton';
 import AiSummary from '../components/AiSummary';
 import { Suspense } from 'react';
+import { default as NextImage } from 'next/image';
 
 type detailPageProps = {
   params: {
@@ -69,6 +71,16 @@ const NoteDetailPage = async ({ params }: detailPageProps) => {
       >
         &larr; ノート一覧に戻る
       </Link>
+      {note.imageUrl && (
+        <div className="relative w-full h-64 mb-6 rounded-lg overflow-hidden border bg-slate-50 p-1">
+          <NextImage
+            src={note.imageUrl}
+            alt={note.title}
+            fill
+            className="object-contain"
+          />
+        </div>
+      )}
       <h1 className="text-3xl font-bold mb-4">{note.title}</h1>
       <p className="text-sm text-gray-500 mb-6">
         最終更新日時: {new Date(note.updatedAt).toLocaleString('ja-JP')}

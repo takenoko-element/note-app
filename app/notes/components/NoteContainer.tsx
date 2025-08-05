@@ -1,4 +1,4 @@
-// app/NoteContainer.tsx
+// app/notes/components/NoteContainer.tsx
 'use client';
 
 import { Note } from '@/types';

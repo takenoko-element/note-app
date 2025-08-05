@@ -1,4 +1,5 @@
 const AiSummary = async ({ content }: { content: string }) => {
+  // app/notes/components/AiSummary.tsx
   // わざと3秒待機して、時間のかかる処理をシミュレート
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
