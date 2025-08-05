@@ -5,7 +5,7 @@ import './globals.css';
 import Providers from '@/app/components/Providers';
 import { Toaster } from 'sonner';
 import { Auth0Provider } from '@auth0/nextjs-auth0';
-import { Header } from './components/layout/Header';
+import { Header } from './layout/Header';
 
 const inter = Inter({ subsets: ['latin'] });
 

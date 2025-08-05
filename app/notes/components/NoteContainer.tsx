@@ -2,9 +2,9 @@
 'use client';
 
 import { Note } from '@/types';
-import { NewNoteForm } from '@/app/components/notes/NewNoteForm';
-import { NoteCard } from '@/app/components/notes/NoteCard';
-import { useNotes } from './hooks/useNotes';
+import { NewNoteForm } from './NewNoteForm';
+import { NoteCard } from './NoteCard';
+import { useNotes } from '../hooks/useNotes';
 
 type NoteContainerProps = {
   initialNotes: Note[];

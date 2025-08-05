@@ -1,7 +1,7 @@
 // app/page.tsx
-import { NoteContainer } from './NoteContainer';
 import { Note } from '@/types';
-import { getAllNotesAction } from './actions/note.actions';
+import { NoteContainer } from './notes/components/NoteContainer';
+import { getAllNotesAction } from '@/app/actions/note.actions';
 import { auth0 } from '@/lib/auth0';
 
 const NotePage = async () => {
