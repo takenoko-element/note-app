@@ -30,7 +30,7 @@ export const getNoteById = async (id: number, userId: string) => {
 // ノートを新規作成
 export const createNote = async (
   userId: string,
-  data: { title: string; content: string },
+  data: { title: string; content: string; imageUrl?: string },
 ) => {
   if (!data.title.trim()) {
     throw new Error('タイトルの入力は必須です。');
@@ -53,6 +53,7 @@ export const createNote = async (
     data: {
       title: data.title,
       content: data.content,
+      imageUrl: data.imageUrl,
       userId: userId,
     },
   });
@@ -62,7 +63,7 @@ export const createNote = async (
 export const updateNote = async (
   id: number,
   userId: string,
-  data: { title: string; content: string },
+  data: { title: string; content: string; imageUrl?: string },
 ) => {
   if (!data.title.trim()) {
     throw new Error('タイトルの入力は必須です。');
@@ -82,6 +83,7 @@ export const updateNote = async (
     data: {
       title: data.title,
       content: data.content,
+      imageUrl: data.imageUrl,
     },
   });
 };

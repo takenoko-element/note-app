@@ -1,6 +1,8 @@
 // app/actions/note.actions.ts
 'use server';
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import {
   getAllNotes,
   createNote,
@@ -20,6 +22,30 @@ const getUserId = async () => {
   return userId;
 };
 
+// 画像保存用のヘルパー関数
+const saveImageAndGetUrl = async (
+  file: File | null,
+): Promise<string | undefined> => {
+  if (!file || file.size === 0) {
+    return undefined;
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = new Uint8Array(arrayBuffer);
+
+  // 保存先のディレクトリパスを生成
+  const uploadDir = path.join(process.cwd(), 'public/uploads');
+
+  // ディレクトリが存在しない場合は再帰的に作成
+  await fs.mkdir(uploadDir, { recursive: true });
+
+  const filePath = path.join(uploadDir, `${Date.now()}_${file.name}`);
+  await fs.writeFile(filePath, buffer);
+
+  // publicディレクトリからの相対パスを返す
+  return `/uploads/${path.basename(filePath)}`;
+};
+
 // ノート取得アクション
 export const getAllNotesAction = async () => {
   const userId = await getUserId();
@@ -31,8 +57,11 @@ export const createNoteAction = async (formData: FormData) => {
   const userId = await getUserId();
   const title = formData.get('title') as string;
   const content = formData.get('content') as string;
+  const file = formData.get('image') as File | null;
 
-  await createNote(userId, { title, content });
+  const imageUrl = await saveImageAndGetUrl(file);
+
+  await createNote(userId, { title, content, imageUrl });
 };
 
 // 更新アクション
@@ -40,8 +69,11 @@ export const updateNoteAction = async (id: number, formData: FormData) => {
   const userId = await getUserId();
   const title = formData.get('title') as string;
   const content = formData.get('content') as string;
+  const file = formData.get('image') as File | null;
 
-  await updateNote(id, userId, { title, content });
+  const imageUrl = await saveImageAndGetUrl(file);
+
+  await updateNote(id, userId, { title, content, imageUrl });
 };
 
 // 削除アクション

@@ -17,6 +17,7 @@ import { Loader2, Pencil, Trash2 } from 'lucide-react';
 
 import { Note } from '@/types';
 import Link from 'next/link';
+import { default as NextImage } from 'next/image';
 
 type NoteCardProps = {
   note: Note;
@@ -95,6 +96,18 @@ export const NoteCard = ({
       <CardContent className="flex-grow">
         <p className="whitespace-pre-wrap">{note.content}</p>
       </CardContent>
+      {note.imageUrl && (
+        <div className="relative w-full h-40 px-6 pt-2">
+          <div className="relative w-full h-full rounded-md border bg-slate-50 p-1">
+            <NextImage
+              src={note.imageUrl}
+              alt={note.title}
+              fill
+              className="object-contain"
+            />
+          </div>
+        </div>
+      )}
       <CardFooter className="flex justify-end space-x-2 items-center">
         <Button
           variant="outline"
