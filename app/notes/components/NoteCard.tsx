@@ -9,13 +9,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '../ui/card';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Button } from '../ui/button';
+} from '@/app/components/ui/card';
+import { Input } from '@/app/components/ui/input';
+import { Textarea } from '@/app/components/ui/textarea';
+import { Button } from '@/app/components/ui/button';
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
 
 import { Note } from '@/types';
+import Link from 'next/link';
 
 type NoteCardProps = {
   note: Note;
@@ -84,7 +85,9 @@ export const NoteCard = ({
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <CardTitle>{note.title}</CardTitle>
+        <Link href={`/notes/${note.id}`} className="hover:underline">
+          <CardTitle>{note.title}</CardTitle>
+        </Link>
         <CardDescription>
           {new Date(note.createdAt).toLocaleString('ja-JP')}
         </CardDescription>

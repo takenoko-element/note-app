@@ -11,6 +11,22 @@ export const getAllNotes = async (userId: string) => {
   });
 };
 
+// ノートを1件取得
+export const getNoteById = async (id: number, userId: string) => {
+  const note = await prisma.note.findUnique({
+    where: {
+      id: id,
+      userId: userId,
+    },
+  });
+
+  if (!note) {
+    return null;
+  }
+
+  return note;
+};
+
 // ノートを新規作成
 export const createNote = async (
   userId: string,

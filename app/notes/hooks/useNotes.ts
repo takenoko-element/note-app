@@ -8,7 +8,7 @@ import {
   deleteNoteAction,
   getAllNotesAction,
   updateNoteAction,
-} from '../actions/note.actions';
+} from '../../actions/note.actions';
 import { toast } from 'sonner';
 
 export const useNotes = (initialNotes?: Note[]) => {
