@@ -1,8 +1,7 @@
 // app/actions/note.actions.ts
 'use server';
 
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import { createClient } from '@supabase/supabase-js';
 import {
   getAllNotes,
   createNote,
@@ -10,6 +9,8 @@ import {
   updateNote,
 } from '@/lib/noteService';
 import { auth0 } from '@/lib/auth0';
+
+const bucketName = process.env.SUPABASE_BUCKET_NAME!;
 
 // ユーザーID取得用のヘルパー関数
 const getUserId = async () => {
@@ -30,20 +31,37 @@ const saveImageAndGetUrl = async (
     return undefined;
   }
 
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = new Uint8Array(arrayBuffer);
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
 
-  // 保存先のディレクトリパスを生成
-  const uploadDir = path.join(process.cwd(), 'public/uploads');
+  const filePath = `images/${Date.now()}_${file.name}`;
 
-  // ディレクトリが存在しない場合は再帰的に作成
-  await fs.mkdir(uploadDir, { recursive: true });
+  // Supabase Storageに管理者権限でアップロード
+  const { data, error } = await supabaseAdmin.storage
+    .from(bucketName) // バケット名
+    .upload(filePath, file);
 
-  const filePath = path.join(uploadDir, `${Date.now()}_${file.name}`);
-  await fs.writeFile(filePath, buffer);
+  if (error) {
+    console.error('Supabase Storageへのアップロードエラー:', error);
+    throw new Error('画像のアップロードに失敗しました。');
+  }
 
-  // publicディレクトリからの相対パスを返す
-  return `/uploads/${path.basename(filePath)}`;
+  // アップロードした画像の署名付きURLを取得 (こちらも管理者クライアントで行う)
+  const ONE_WEEK_IN_SECONDS = 604800;
+  const { data: signedUrlData, error: signedUrlError } =
+    await supabaseAdmin.storage
+      .from(bucketName)
+      .createSignedUrl(data.path, ONE_WEEK_IN_SECONDS); // 署名付きURLを取得
+
+  if (signedUrlError) {
+    console.error('署名付きURLの生成エラー:', signedUrlError);
+    throw new Error('画像URLの生成に失敗しました。');
+  }
+
+  // 署名付きURLを返す
+  return signedUrlData.signedUrl;
 };
 
 // ノート取得アクション

@@ -78,6 +78,7 @@ const NoteDetailPage = async ({ params }: detailPageProps) => {
             alt={note.title}
             fill
             className="object-contain"
+            sizes="100vw"
           />
         </div>
       )}

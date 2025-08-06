@@ -149,6 +149,7 @@ export const NoteCard = ({
                     alt="プレビュー"
                     fill
                     className="object-contain rounded-md"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 ) : (
                   <div className="text-gray-500">
@@ -220,6 +221,7 @@ export const NoteCard = ({
               alt={note.title}
               fill
               className="object-contain"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
         </div>
