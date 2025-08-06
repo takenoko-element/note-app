@@ -10,6 +10,12 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com', // Googleアカウントでのログインも考慮して残しておく
       },
+      {
+        protocol: 'https',
+        hostname: 'ybzztnikfywyxuymzlms.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/**',
+      },
     ],
   },
 };
