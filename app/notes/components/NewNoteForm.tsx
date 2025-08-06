@@ -41,7 +41,7 @@ export const NewNoteForm = ({ addNote, isAdding }: NewNoteFormProps) => {
     onDrop,
     accept: { 'image/*': [] },
     multiple: false,
-    noClick: true, // `open`関数でクリックを制御するためtrueに
+    noClick: false, // `open`関数でクリックを許可するために`false`に
     noKeyboard: true,
   });
 
