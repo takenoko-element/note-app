@@ -1,6 +1,7 @@
 // app/actions/note.actions.ts
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import {
   getAllNotes,
@@ -9,9 +10,9 @@ import {
   updateNote,
 } from '@/lib/noteService';
 import { auth0 } from '@/lib/auth0';
-import { revalidatePath } from 'next/cache';
+import { env } from '@/lib/env';
 
-const bucketName = process.env.SUPABASE_BUCKET_NAME!;
+const bucketName = env.SUPABASE_BUCKET_NAME;
 
 // ユーザーID取得用のヘルパー関数
 const getUserId = async () => {
@@ -33,8 +34,8 @@ const saveImageAndGetUrl = async (
   }
 
   const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.SUPABASE_SERVICE_ROLE_KEY,
   );
 
   const filePath = `images/${Date.now()}_${file.name}`;
