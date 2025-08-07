@@ -18,6 +18,7 @@ export const useNotes = (initialNotes?: Note[]) => {
   const {
     data: notes,
     isLoading,
+    isFetching,
     isError,
   } = useQuery<Note[]>({
     queryKey: ['notes'],
@@ -92,6 +93,7 @@ export const useNotes = (initialNotes?: Note[]) => {
   return {
     notes,
     isLoading,
+    isFetching,
     isError,
     addNote: addNoteMutation.mutate,
     isAdding: addNoteMutation.isPending,

@@ -9,6 +9,7 @@ import {
   updateNote,
 } from '@/lib/noteService';
 import { auth0 } from '@/lib/auth0';
+import { revalidatePath } from 'next/cache';
 
 const bucketName = process.env.SUPABASE_BUCKET_NAME!;
 
@@ -80,6 +81,7 @@ export const createNoteAction = async (formData: FormData) => {
   const imageUrl = await saveImageAndGetUrl(file);
 
   await createNote(userId, { title, content, imageUrl });
+  revalidatePath('/');
 };
 
 // 更新アクション
@@ -109,10 +111,12 @@ export const updateNoteAction = async (id: number, formData: FormData) => {
   }
 
   await updateNote(id, userId, updateData);
+  revalidatePath('/');
 };
 
 // 削除アクション
 export const deleteNoteAction = async (id: number) => {
   const userId = await getUserId();
   await deleteNote(id, userId);
+  revalidatePath('/');
 };
