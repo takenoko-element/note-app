@@ -1,5 +1,25 @@
-node_modules
-.next
-npm-debug.log
-README.md
+# Git関連
 .git
+.gitignore
+
+# Docker関連
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Node.js関連
+node_modules
+npm-debug.log
+
+# Next.js関連
+.next
+
+# OS固有のファイル
+.DS_Store
+
+# 環境変数ファイル
+.env
+.env.local
+.env.production
+
+README.md
