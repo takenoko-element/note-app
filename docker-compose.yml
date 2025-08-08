@@ -1,16 +1,50 @@
 services:
-  app:
-    # カレントディレクトリのDockerfileを使ってイメージをビルド
-    build: .
-    # ポートのマッピング（PCの3000番ポートをコンテナの3000番ポートに繋ぐ）
+  # ---------------------
+  # 開発用サービス
+  # ---------------------
+  dev:
+    # イメージをビルドする際のコンテキストとDockerfileのパス
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # マルチステージビルドの特定のステージまでを実行する
+      target: dependencies
+    # コンテナ名
+    container_name: note-app-dev
+    # ポートマッピング (PC:コンテナ)
     ports:
       - '3000:3000'
-    # ボリュームのマッピング（PCのコードをコンテナに同期させる）
+    # ボリュームマッピング (ホットリロードのためソースコードを同期)
     volumes:
       - .:/app
-      # node_modulesは同期させない（コンテナ内のものを優先）
+      # node_modulesは同期対象から除外し、コンテナ内のものを利用
       - /app/node_modules
-    # 開発サーバーを起動するコマンドに上書き
+    # 開発サーバーを起動
     command: npm run dev
+    # 環境変数ファイル
+    env_file:
+      - .env.local
+    # ホットリロードのためのポーリングを有効化
     environment:
       - WATCHPACK_POLLING=true
+
+  # ---------------------
+  # 本番用サービス
+  # ---------------------
+  prod:
+    # イメージをビルドする
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Dockerfileの最後までビルドを実行する
+      target: runner
+    # コンテナ名
+    container_name: note-app-prod
+    # ポートマッピング
+    ports:
+      - '3000:3000'
+    # 本番用環境変数ファイル
+    env_file:
+      - .env.production
+    # コンテナが異常終了した場合に自動で再起動する
+    restart: always

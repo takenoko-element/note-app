@@ -1,6 +1,6 @@
 // lib/env.ts
 import { z } from 'zod';
-import validator from 'validator';
+// import validator from 'validator';
 
 /**
  * 環境変数のスキーマ定義
