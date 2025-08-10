@@ -1,5 +1,5 @@
 // app/notes/components/NewNoteForm.test.tsx
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
@@ -9,30 +9,15 @@ import { NewNoteForm } from './NewNoteForm';
 
 // Next.jsのImageを従来のimgにモック
 vi.mock('next/image', () => ({
-  default: (props: ComponentProps<'img'>) => {
+  default: (props: ComponentProps<'img'> & { fill?: boolean }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { fill, ...rest } = props;
     // next/image に渡されるすべてのプロパティ（src, altなど）を
     // そのまま通常のimgタグに流し込む
     // eslint-disable-next-line @next/next/no-img-element
-    return <img {...props} alt={props.alt} />;
+    return <img {...rest} alt={props.alt} />;
   },
 }));
-
-// JSDOMにはURL.createObjectURLが存在しないため、テスト用にモックする
-if (typeof window.URL.createObjectURL === 'undefined') {
-  // Object.definePropertyを使って、読み取り専用のプロパティにも設定できるようにする
-  Object.defineProperty(window.URL, 'createObjectURL', {
-    // vi.fn()で空のモック関数を作成し、ダミーのURL文字列を返すように設定
-    value: vi.fn(() => 'blob:http://localhost:3000/dummy-image-url'),
-    writable: true, // 念のため書き込み可能にしておく
-  });
-}
-// createObjectURLと対になるrevokeObjectURLも、同様にモックしておく
-if (typeof window.URL.revokeObjectURL === 'undefined') {
-  Object.defineProperty(window.URL, 'revokeObjectURL', {
-    value: vi.fn(),
-    writable: true,
-  });
-}
 
 // dropzoneのモック
 let onDropCallback: (files: File[]) => void;
@@ -132,7 +117,10 @@ describe('NewNoteForm', () => {
     // --- 操作 ---
     // 保存しておいたonDropコールバックを、テストから直接呼び出す！
     // これで、ファイルがドロップされたのと同じ状況を作り出せる
-    onDropCallback([file]);
+    // テスト安定化のためにactでラップし、処理がすべて完了するのを待つ
+    act(() => {
+      onDropCallback([file]);
+    });
 
     // --- 結果の検証 ---
     const previewImage = await screen.findByRole('img', {
@@ -149,7 +137,9 @@ describe('NewNoteForm', () => {
     const file = new File(['hello'], 'hello.png', { type: 'image/png' });
 
     // --- 操作 ---
-    onDropCallback([file]);
+    act(() => {
+      onDropCallback([file]);
+    });
 
     const previewImage = await screen.findByRole('img', {
       name: /プレビュー/i,
@@ -166,7 +156,9 @@ describe('NewNoteForm', () => {
       screen.queryByRole('img', { name: /プレビュー/i }),
     ).toBeInTheDocument();
 
-    await user.click(clearButton);
+    await act(async () => {
+      await user.click(clearButton);
+    });
 
     // プレビュー画像がDOMから消えたことを確認
     // queryBy... は要素が見つからない場合にnullを返すので、「ないこと」の確認に最適
