@@ -7,6 +7,7 @@ import { ReactNode } from 'react';
 import userEvent from '@testing-library/user-event';
 
 import * as noteActions from '@/app/actions/note.actions';
+import * as useNotesHook from '../hooks/useNotes';
 
 // env.tsのモック
 vi.mock('@/lib/env', () => ({
@@ -95,7 +96,7 @@ const createWrapper = () => {
 
 describe('NoteContainer with MSW', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   // 1. 表示テスト
@@ -108,7 +109,6 @@ describe('NoteContainer with MSW', () => {
 
     // screen.debug(undefined, Infinity);
 
-    // この後の検証でテストが失敗する
     expect(await screen.findByText('MSWのテスト')).toBeInTheDocument();
     expect(screen.getByText(/2番目のノートです/i)).toBeInTheDocument();
   });
@@ -139,6 +139,9 @@ describe('NoteContainer with MSW', () => {
       ...mockNotes,
       newNote,
     ]);
+
+    // createNoteActionがまだ1度も呼ばれていないことの確認
+    expect(noteActions.createNoteAction).not.toHaveBeenCalled();
 
     // --- ユーザー操作のシミュレーション ---
     // フォームに入力
@@ -175,6 +178,9 @@ describe('NoteContainer with MSW', () => {
       notesAfterDelete,
     );
 
+    // 削除前には存在することを確認
+    expect(screen.queryByText(noteToDelete.title)).toBeInTheDocument();
+
     // --- ユーザー操作のシミュレーション ---
     // 削除ボタンをクリック（複数の削除ボタンから最初のものを選択）
     const deleteButtons = await screen.findAllByRole('button', {
@@ -197,5 +203,32 @@ describe('NoteContainer with MSW', () => {
 
     // もう一方のノートは残っていることを確認
     expect(screen.getByText('2番目のノートです')).toBeInTheDocument();
+  });
+
+  // 4. ローディング状態のテスト
+  it('データの取得中は、スケルトンが表示されること', async () => {
+    vi.spyOn(useNotesHook, 'useNotes').mockReturnValue({
+      notes: [],
+      isFetching: true,
+      isLoading: true,
+      isError: false,
+      addNote: vi.fn(),
+      isAdding: false,
+      updateNote: vi.fn(),
+      isUpdating: false,
+      deleteNote: vi.fn(),
+      isDeleting: false,
+    });
+
+    const Wrapper = createWrapper();
+    // このテストではinitialNotesは空で良い
+    render(<NoteContainer initialNotes={[]} />, { wrapper: Wrapper });
+
+    // --- 結果の検証 ---
+    const skeletons = screen.getAllByTestId('note-card-skeleton');
+    expect(skeletons).toHaveLength(3);
+
+    // 念のため、ノートのタイトルが表示されていないことも確認
+    expect(screen.queryByText('最初のノート')).not.toBeInTheDocument();
   });
 });
