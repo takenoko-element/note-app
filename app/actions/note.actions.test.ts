@@ -1,31 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-// テスト対象のActionと、spyOnで使うためのモジュール全体をインポート
-import { createNoteAction, deleteNoteAction } from './note.actions';
-import * as noteActions from './note.actions';
+
+import {
+  createNoteAction,
+  deleteNoteAction,
+  getAllNotesAction,
+  updateNoteAction,
+} from '@/app/actions/note.actions';
 import { auth0 } from '@/lib/auth0';
+import * as noteActions from './note.actions';
 import * as noteService from '@/lib/noteService';
-import { createNote } from '@/lib/noteService';
+import * as imageService from '@/lib/image.service';
+import { revalidatePath } from 'next/cache';
 
 // --- モックの設定 ---
 // Actionが依存している「外部」モジュールだけをモックする
 vi.mock('@/lib/auth0');
 vi.mock('@/lib/noteService');
-
-// saveImageAndGetUrlをモック
-vi.mock('./note.actions', async (importOriginal) => {
-  // 元のモジュールを動的にインポートする
-  const originalModule = await importOriginal<typeof noteActions>();
-  return {
-    // スプレッド構文で、元のモジュールのエクスポートを全て展開
-    // これにより、createNoteAction などは本物の実装が使われる
-    ...originalModule,
-
-    // saveImageAndGetUrl だけを、モック関数で上書きする
-    saveImageAndGetUrl: vi
-      .fn()
-      .mockResolvedValue('https://mocked.com/image-from-mock.jpg'),
-  };
-});
+vi.mock('@/lib/image.service');
 
 // env.tsのモック
 vi.mock('@/lib/env', () => ({
@@ -46,25 +37,85 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
 
+// --- モックデータ ---
+const mockNotes = [
+  {
+    id: 1,
+    title: 'MSWのテスト',
+    content: '最初のノートです',
+    imageUrl: 'http://example.com/image.jpg',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    userId: 'user123',
+  },
+  {
+    id: 2,
+    title: 'React Queryのテスト',
+    content: '2番目のノートです',
+    imageUrl: 'http://example.com/image2.jpg',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    userId: 'user123',
+  },
+];
+
 // --- テスト本体 ---
 describe('Note Actions', () => {
-  const mockUserId = 'test-user-123';
+  // モックされた関数を型安全に扱うための準備
+  const mockedGetSession = vi.mocked(auth0.getSession);
+  const mockedGetAllNotes = vi.mocked(noteService.getAllNotes);
+  const mockedCreateNote = vi.mocked(noteService.createNote);
+  const mockedUpdateNote = vi.mocked(noteService.updateNote);
+  const mockedDeleteNote = vi.mocked(noteService.deleteNote);
+  const mockedSaveImage = vi.mocked(imageService.saveImageAndGetUrl);
+  const mockedRevalidatePath = vi.mocked(revalidatePath);
 
+  const mockUserId = 'test-user-123';
+  const mockNoteId = 1;
+
+  // 各テストの前にモックをリセットし、基本的な認証状態を設定します
   beforeEach(() => {
-    // restoreAllMocksで、spyOnで上書きした実装も元に戻す
     vi.restoreAllMocks();
   });
 
-  // === createNoteActionのテスト ===
+  // --- 認証エラーのテスト ---
+  it('未認証の場合、エラーをスローすること', async () => {
+    // 認証されていない状態をシミュレート
+    mockedGetSession.mockResolvedValue(null);
+    const formData = new FormData();
+
+    await expect(noteActions.createNoteAction(formData)).rejects.toThrow(
+      'ユーザーが認証されていません。ログインしてください。',
+    );
+  });
+
+  // --- getAllNotesActionのテスト ---
+  describe('getAllNotesAction', () => {
+    it('認証されたユーザーの全ノートを取得し返却する', async () => {
+      vi.mocked(auth0.getSession).mockResolvedValue({
+        user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      mockedGetAllNotes.mockResolvedValue(mockNotes);
+
+      const result = await getAllNotesAction();
+
+      expect(mockedGetAllNotes).toHaveBeenCalledWith(mockUserId);
+      expect(result).toEqual(mockNotes);
+    });
+  });
+
+  // --- createNoteActionのテスト ---
   describe('createNoteAction', () => {
     it('認証済みで画像がない場合、正しい引数でcreateNoteを呼び出すこと', async () => {
       // 準備：認証済みユーザーをシミュレート
       vi.mocked(auth0.getSession).mockResolvedValue({
         user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
-      // 準備：saveImageAndGetUrlが呼ばれないので、undefinedを返すようにスパイを設定
-      vi.spyOn(noteActions, 'saveImageAndGetUrl').mockResolvedValue(undefined);
 
+      // テスト用のフォームデータを作成
       const formData = new FormData();
       formData.append('title', 'アクションのテスト');
       formData.append('content', 'テスト内容');
@@ -78,104 +129,198 @@ describe('Note Actions', () => {
         mockUserId,
         expect.objectContaining({
           title: 'アクションのテスト',
+          content: 'テスト内容',
           imageUrl: undefined,
         }),
       );
     });
 
     it('画像が提供された場合、画像のURLと共にcreateNoteを呼び出す', async () => {
-      // --- Arrange (準備) ---
+      // --- 準備 ---
       vi.mocked(auth0.getSession).mockResolvedValue({
         user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
-      // ★ 本題：saveImageAndGetUrlをモックする
-      // `noteActions`オブジェクトの`saveImageAndGetUrl`関数をスパイ（監視）し、
-      // 動作を「指定したURLを返すPromise」に書き換える
 
-      vi.mock('@/lib/noteService', () => ({
-        createNote: vi.fn(), // 呼び出しを監視できる空の関数にする
-      }));
       // テスト用のファイルとフォームデータを作成
       const testFile = new File(['dummy content'], 'test.png', {
         type: 'image/png',
       });
+      const testImageUrl = 'http://example.com/test.jpg';
       const formData = new FormData();
       formData.append('title', 'テストタイトル');
       formData.append('content', 'テストコンテント');
       formData.append('image', testFile);
 
-      // --- Act (実行) ---
-      await noteActions.createNoteAction(formData);
+      mockedSaveImage.mockResolvedValue(testImageUrl);
 
-      // --- Assert (検証) ---
+      // --- 実行 ---
+      await createNoteAction(formData);
 
+      // --- 検証 ---
       // 1. 画像保存関数が呼び出されたか
-      //   expect(saveImageSpy).toHaveBeenCalledWith(testFile);
+      expect(mockedSaveImage).toHaveBeenCalledWith(testFile);
 
       // 2. createNoteが正しい引数で呼び出されたか
-      expect(createNote).toHaveBeenCalledWith(
-        'test-user-123', // モックしたユーザーID
-        {
-          title: 'テストタイトル',
-          content: 'テストコンテント',
-          imageUrl: 'https://mocked.com/image.jpg', // ★モックしたURL
-        },
-      );
+      expect(mockedCreateNote).toHaveBeenCalledWith(mockUserId, {
+        title: 'テストタイトル',
+        content: 'テストコンテント',
+        imageUrl: testImageUrl,
+      });
     });
 
-    // it('認証済みで画像がある場合、画像のURLと共にcreateNoteを呼び出すこと', async () => {
-    //   // 準備：認証済みユーザーをシミュレート
-    //   vi.mocked(auth0.getSession).mockResolvedValue({
-    //     user: { sub: mockUserId },
-    //   } as any);
-    //   // ★★★ spyOnを使って、saveImageAndGetUrlだけを上書き ★★★
-    //   const mockImageUrl = 'http://example.com/uploaded.png';
-    //   mockSaveImageAndGetUrl.mockResolvedValue(mockImageUrl);
+    it('createNoteが失敗した場合、エラーがスローされること', async () => {
+      // --- 準備 ---
+      vi.mocked(auth0.getSession).mockResolvedValue({
+        user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
 
-    //   const testFile = new File(['test'], 'test.png');
-    //   const formData = new FormData();
-    //   formData.append('title', '画像付きテスト');
-    //   formData.append('image', testFile);
-
-    //   // 実行
-    //   await createNoteAction(formData);
-
-    //   // 検証
-    //   expect(mockSaveImageAndGetUrl).toHaveBeenCalledWith(testFile);
-    //   expect(noteService.createNote).toHaveBeenCalledWith(
-    //     mockUserId,
-    //     expect.objectContaining({ imageUrl: mockImageUrl }),
-    //   );
-    // });
-
-    it('未認証の場合、エラーをスローすること', async () => {
-      vi.mocked(auth0.getSession).mockResolvedValue(null);
       const formData = new FormData();
+      formData.append('title', '失敗するノート');
+      formData.append('content', 'エラーテスト');
 
-      await expect(noteActions.createNoteAction(formData)).rejects.toThrow(
-        'ユーザーが認証されていません。ログインしてください。',
+      // noteService.createNoteがエラーを投げるようにモック
+      const dbError = new Error('データベースエラー');
+      vi.mocked(noteService.createNote).mockRejectedValue(dbError);
+
+      // --- 実行と検証 ---
+      // createNoteActionを実行すると、内部で発生したエラーがそのままスローされることを期待
+      await expect(createNoteAction(formData)).rejects.toThrow(
+        'データベースエラー',
       );
     });
   });
 
-  // === deleteNoteActionのテスト ===
-  //   describe('deleteNoteAction', () => {
-  //     it('認証済みの場合、正しいIDでdeleteNoteを呼び出すこと', async () => {
-  //       // 準備：認証済みユーザー
-  //       vi.mocked(auth0.getSession).mockResolvedValue({
-  //         user: { sub: mockUserId },
-  //       } as any);
-  //       const noteIdToDelete = 999;
+  // --- updateNoteActionのテスト ---
+  describe('updateNoteAction', () => {
+    it('imageActionがupdateで新しい画像とノートを渡した場合、saveImageAndGetUrlとupdateNoteが呼び出される', async () => {
+      // --- 準備 ---
+      vi.mocked(auth0.getSession).mockResolvedValue({
+        user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
 
-  //       // 実行
-  //       await deleteNoteAction(noteIdToDelete);
+      const mockFile = new File(['new image'], 'new.png', {
+        type: 'image/png',
+      });
+      const newImageUrl = 'http://example.com/new.png';
+      const formData = new FormData();
+      formData.append('title', 'タイトル更新');
+      formData.append('content', 'コンテンツ更新');
+      formData.append('image', mockFile);
+      formData.append('imageAction', 'update');
 
-  //       // 検証
-  //       expect(noteService.deleteNote).toHaveBeenCalledTimes(1);
-  //       expect(noteService.deleteNote).toHaveBeenCalledWith(
-  //         noteIdToDelete,
-  //         mockUserId,
-  //       );
-  //     });
-  //   });
+      mockedSaveImage.mockResolvedValue(newImageUrl);
+
+      await updateNoteAction(mockNoteId, formData);
+
+      expect(mockedSaveImage).toHaveBeenCalledWith(mockFile);
+      expect(mockedUpdateNote).toHaveBeenCalledWith(mockNoteId, mockUserId, {
+        title: 'タイトル更新',
+        content: 'コンテンツ更新',
+        imageUrl: newImageUrl,
+      });
+      expect(mockedRevalidatePath).toHaveBeenCalledWith('/');
+    });
+
+    it('imageActionがclearの場合、saveImageAndGetUrlは呼び出されない & imageUrlがnull', async () => {
+      // --- 準備 ---
+      vi.mocked(auth0.getSession).mockResolvedValue({
+        user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      const testFile = new File(['dummy content'], 'test.png', {
+        type: 'image/png',
+      });
+      const formData = new FormData();
+      formData.append('title', '更新タイトル');
+      formData.append('content', '更新コンテンツ');
+      formData.append('image', testFile);
+      formData.append('imageAction', 'clear');
+
+      await updateNoteAction(mockNoteId, formData);
+
+      // 画像クリアなのでsaveImageは呼ばれない
+      expect(mockedSaveImage).not.toHaveBeenCalled();
+      expect(mockedUpdateNote).toHaveBeenCalledWith(mockNoteId, mockUserId, {
+        title: '更新タイトル',
+        content: '更新コンテンツ',
+        imageUrl: null,
+      });
+      expect(mockedRevalidatePath).toHaveBeenCalledWith('/');
+    });
+
+    it('imageActionがkeepの場合、saveImageAndGetUrlは呼び出されない', async () => {
+      // --- 準備 ---
+      vi.mocked(auth0.getSession).mockResolvedValue({
+        user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      const formData = new FormData();
+      formData.append('title', 'キープタイトル');
+      formData.append('content', 'キープコンテンツ');
+      formData.append('imageAction', 'keep');
+
+      await updateNoteAction(mockNoteId, formData);
+
+      // 画像維持なのでsaveImageは呼ばれない
+      expect(mockedSaveImage).not.toHaveBeenCalled();
+      // updateDataにimageUrlプロパティが含まれていないことを確認
+      expect(mockedUpdateNote).toHaveBeenCalledWith(mockNoteId, mockUserId, {
+        title: 'キープタイトル',
+        content: 'キープコンテンツ',
+      });
+      expect(mockedRevalidatePath).toHaveBeenCalledWith('/');
+    });
+
+    it('imageActionがupdateでもファイルが空の場合、画像は更新されないこと', async () => {
+      // --- 準備 ---
+      vi.mocked(auth0.getSession).mockResolvedValue({
+        user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      const formData = new FormData();
+      formData.append('title', 'タイトル更新');
+      formData.append('content', 'コンテンツ更新');
+      // sizeが0の空ファイルを渡す
+      formData.append('image', new File([], 'empty.png'));
+      formData.append('imageAction', 'update');
+
+      // --- 実行 ---
+      await updateNoteAction(mockNoteId, formData);
+
+      // --- 検証 ---
+      // saveImageAndGetUrlが呼び出されないことを確認
+      expect(mockedSaveImage).not.toHaveBeenCalled();
+      // imageUrlプロパティが含まれずにupdateNoteが呼ばれることを確認
+      expect(mockedUpdateNote).toHaveBeenCalledWith(
+        mockNoteId,
+        mockUserId,
+        expect.not.objectContaining({ imageUrl: expect.anything() }),
+      );
+    });
+  });
+
+  // --- deleteNoteActionのテスト ---
+  describe('deleteNoteAction', () => {
+    it('認証済みの場合、正しいIDでdeleteNoteを呼び出すこと', async () => {
+      // 準備：認証済みユーザー
+      vi.mocked(auth0.getSession).mockResolvedValue({
+        user: { sub: mockUserId },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      // 実行
+      await deleteNoteAction(mockNoteId);
+
+      // 検証
+      expect(mockedDeleteNote).toHaveBeenCalledTimes(1);
+      expect(mockedDeleteNote).toHaveBeenCalledWith(mockNoteId, mockUserId);
+      expect(mockedRevalidatePath).toHaveBeenCalledWith('/');
+    });
+  });
 });
