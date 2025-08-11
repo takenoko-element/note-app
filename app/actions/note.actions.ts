@@ -26,7 +26,7 @@ const getUserId = async () => {
 };
 
 // 画像保存用のヘルパー関数
-const saveImageAndGetUrl = async (
+export const saveImageAndGetUrl = async (
   file: File | null,
 ): Promise<string | undefined> => {
   if (!file || file.size === 0) {
