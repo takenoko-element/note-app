@@ -101,9 +101,10 @@ export const NewNoteForm = ({ addNote, isAdding }: NewNoteFormProps) => {
               className={`mt-1 border-2 border-dashed rounded-lg p-4 text-center transition-colors
                 ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
                 ${preview ? 'h-48' : 'h-24'} flex items-center justify-center relative`}
+              data-testid="dropzone-area"
             >
               {/* inputは非表示だが、dropzoneのために必要 */}
-              <input {...getInputProps()} />
+              <input {...getInputProps()} data-testid="dropzone-input" />
 
               {preview ? (
                 <NextImage
