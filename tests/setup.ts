@@ -5,6 +5,8 @@ import '@testing-library/jest-dom/vitest';
 import { server } from '../mocks/server';
 import '@testing-library/jest-dom';
 
+vi.mock('@/lib/auth0');
+
 // JSDOMにはURL.createObjectURLが存在しないため、テスト用にモックする
 if (typeof window.URL.createObjectURL === 'undefined') {
   // Object.definePropertyを使って、読み取り専用のプロパティにも設定できるようにする
