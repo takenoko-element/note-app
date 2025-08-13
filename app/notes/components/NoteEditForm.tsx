@@ -89,7 +89,13 @@ export const NoteEditForm = ({
               )}
             </div>
             <div className="mt-2 flex items-center justify-end gap-2">
-              <Button type="button" size="sm" variant="outline" onClick={open}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={isUpdating}
+                onClick={open}
+              >
                 画像を選択
               </Button>
               {preview && (
@@ -97,6 +103,7 @@ export const NoteEditForm = ({
                   type="button"
                   size="sm"
                   variant="destructive"
+                  disabled={isUpdating}
                   onClick={handleClearImage}
                 >
                   画像をクリア
@@ -110,6 +117,7 @@ export const NoteEditForm = ({
             type="button"
             variant="ghost"
             size="sm"
+            disabled={isUpdating}
             onClick={handleCancel}
           >
             キャンセル
