@@ -9,7 +9,12 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "test": "vitest",
-    "test:ui": "vitest --ui --api 9521"
+    "test:ui": "vitest --ui --api 9521",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "db:test:reset": "dotenv -e .env.test -- prisma migrate reset --force",
+    "db:test:seed": "dotenv -e .env.test -- prisma db seed",
+    "dev:test": "dotenv -e .env.test -- next dev"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.8.0",
@@ -33,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.54.2",
     "@prisma/client": "^6.11.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.4",
@@ -44,6 +50,7 @@
     "@types/validator": "^13.15.2",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/ui": "^3.2.4",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "eslint-config-prettier": "^10.1.5",

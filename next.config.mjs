@@ -10,9 +10,17 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com', // Googleアカウントでのログインも考慮して残しておく
       },
+      // .env.local用supabase設定
       {
         protocol: 'https',
         hostname: 'ybzztnikfywyxuymzlms.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/**',
+      },
+      // .env.test用supabase設定
+      {
+        protocol: 'https',
+        hostname: 'vfcihxlbeijrsiasaggy.supabase.co',
         port: '',
         pathname: '/storage/v1/object/**',
       },
