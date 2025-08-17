@@ -11,10 +11,7 @@ import { Suspense } from 'react';
 import { default as NextImage } from 'next/image';
 
 type detailPageProps = {
-  params: {
-    id: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
 };
 
 export const generateMetadata = async ({
