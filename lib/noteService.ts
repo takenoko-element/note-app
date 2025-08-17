@@ -2,13 +2,27 @@
 import prisma from '@/lib/prisma';
 import { auth0 } from './auth0';
 import { findOrCreateUser } from './userService';
+import { getSignedUrl } from './image.service';
 
 // ノートを全件取得
 export const getAllNotes = async (userId: string) => {
-  return await prisma.note.findMany({
+  const notes = await prisma.note.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
   });
+
+  // 取得した各ノートの画像パスから署名付きURLを生成
+  const notesWithSignedUrls = await Promise.all(
+    notes.map(async (note) => {
+      if (note.imageUrl) {
+        // imageUrl（ファイルパス）を署名付きURLで上書き
+        note.imageUrl = await getSignedUrl(note.imageUrl);
+      }
+      return note;
+    }),
+  );
+
+  return notesWithSignedUrls;
 };
 
 // ノートを1件取得
@@ -22,6 +36,10 @@ export const getNoteById = async (id: number, userId: string) => {
 
   if (!note) {
     return null;
+  }
+  // 画像パスがあれば署名付きURLを生成して上書き
+  if (note.imageUrl) {
+    note.imageUrl = await getSignedUrl(note.imageUrl);
   }
 
   return note;
