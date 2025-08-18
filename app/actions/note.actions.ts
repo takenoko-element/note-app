@@ -10,7 +10,7 @@ import {
   updateNote,
 } from '@/lib/noteService';
 import { auth0 } from '@/lib/auth0';
-import { saveImageAndGetUrl } from '@/lib/image.service';
+import { saveImageAndGetPath } from '@/lib/image.service';
 
 // ユーザーID取得用のヘルパー関数
 const getUserId = async () => {
@@ -36,7 +36,7 @@ export const createNoteAction = async (formData: FormData) => {
   const content = formData.get('content') as string;
   const file = formData.get('image') as File | null;
 
-  const imageUrl = await saveImageAndGetUrl(file);
+  const imageUrl = await saveImageAndGetPath(file);
 
   await createNote(userId, { title, content, imageUrl });
   revalidatePath('/');
@@ -65,7 +65,7 @@ export const updateNoteAction = async (id: number, formData: FormData) => {
   if (imageAction === 'clear') {
     updateData.imageUrl = null;
   } else if (imageAction === 'update' && file && file.size > 0) {
-    updateData.imageUrl = await saveImageAndGetUrl(file);
+    updateData.imageUrl = await saveImageAndGetPath(file);
   }
 
   await updateNote(id, userId, updateData);

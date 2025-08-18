@@ -11,7 +11,7 @@ const bucketName = env.SUPABASE_BUCKET_NAME;
  * @param file - 保存する画像ファイル
  * @returns 署名付きURL。ファイルがない場合はundefined。
  */
-export const saveImageAndGetUrl = async (
+export const saveImageAndGetPath = async (
   file: File | null,
 ): Promise<string | undefined> => {
   if (!file || file.size === 0) {
@@ -35,17 +35,35 @@ export const saveImageAndGetUrl = async (
     throw new Error('画像のアップロードに失敗しました。');
   }
 
-  // アップロードした画像の署名付きURLを取得
-  const ONE_WEEK_IN_SECONDS = 604800;
-  const { data: signedUrlData, error: signedUrlError } =
-    await supabaseAdmin.storage
-      .from(bucketName)
-      .createSignedUrl(data.path, ONE_WEEK_IN_SECONDS);
+  return data.path;
+};
 
-  if (signedUrlError) {
-    console.error('署名付きURLの生成エラー:', signedUrlError);
-    throw new Error('画像URLの生成に失敗しました。');
+/**
+ * 指定されたファイルパスから署名付きURLを生成します。
+ * @param filePath - Supabase Storage内のファイルパス
+ * @returns 署名付きURL。ファイルパスがない場合やエラー時はnull。
+ */
+export const getSignedUrl = async (
+  filePath: string | null,
+): Promise<string | null> => {
+  if (!filePath) {
+    return null;
   }
 
-  return signedUrlData.signedUrl;
+  const supabaseAdmin = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.SUPABASE_SERVICE_ROLE_KEY,
+  );
+
+  const ONE_DAY_IN_SECONDS = 86400;
+  const { data, error } = await supabaseAdmin.storage
+    .from(bucketName)
+    .createSignedUrl(filePath, ONE_DAY_IN_SECONDS);
+
+  if (error) {
+    console.error('署名付きURLの生成エラー:', error);
+    return null;
+  }
+
+  return data.signedUrl;
 };

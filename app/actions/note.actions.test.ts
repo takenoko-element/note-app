@@ -67,7 +67,7 @@ describe('Note Actions', () => {
   const mockedCreateNote = vi.mocked(noteService.createNote);
   const mockedUpdateNote = vi.mocked(noteService.updateNote);
   const mockedDeleteNote = vi.mocked(noteService.deleteNote);
-  const mockedSaveImage = vi.mocked(imageService.saveImageAndGetUrl);
+  const mockedSaveImage = vi.mocked(imageService.saveImageAndGetPath);
   const mockedRevalidatePath = vi.mocked(revalidatePath);
 
   const mockUserId = 'test-user-123';
