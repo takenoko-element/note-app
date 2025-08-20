@@ -13,6 +13,15 @@ export default defineConfig({
     setupFiles: './tests/setup.ts',
     // CSSファイルのインポートをモックする設定（テスト実行速度の向上）
     css: true,
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,playwright}.config.*',
+      // PlaywrightのE2Eテストフォルダを除外
+      '**/e2e/**',
+    ],
   },
   // tsconfig.jsonのパスエイリアス（例: @/*）をVitestに認識させる設定
   resolve: {

@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useNoteCard } from './useNoteCard';
 import type { Note } from '@/types';
+import type { NoteFormInput } from '@/lib/validators';
 
 // --- テストデータとモック ---
 const mockNote: Note = {
@@ -15,6 +16,19 @@ const mockNote: Note = {
 };
 
 const mockUpdateNote = vi.fn();
+const mockReset = vi.fn();
+vi.mock('react-hook-form', async (importOriginal) => {
+  const original = await importOriginal<typeof import('react-hook-form')>();
+  return {
+    ...original,
+    useForm: () => ({
+      register: vi.fn(),
+      handleSubmit: (fn: (data: NoteFormInput) => void) => fn,
+      formState: { errors: {} },
+      reset: mockReset,
+    }),
+  };
+});
 
 describe('useNoteCard Hook', () => {
   beforeEach(() => {
@@ -70,18 +84,19 @@ describe('useNoteCard Hook', () => {
   });
 
   // 4. フォーム送信のテスト
-  it('handleFormActionを呼び出すと、updateNoteが正しいデータで呼び出されること', () => {
+  it('onSubmitを呼び出すと、updateNoteが正しいデータで呼び出されること', () => {
     const { result } = renderHook(() =>
       useNoteCard({ note: mockNote, updateNote: mockUpdateNote }),
     );
 
     // テスト用のFormDataオブジェクトを作成
-    const formData = new FormData();
-    formData.append('title', 'Updated Title');
-    formData.append('content', 'Updated Content');
+    const validatedData = {
+      title: 'Updated Title',
+      content: 'Updated Content',
+    };
 
     act(() => {
-      result.current.handleFormAction(formData);
+      result.current.onSubmit(validatedData);
     });
 
     // updateNoteが1回呼ばれたか
@@ -101,7 +116,10 @@ describe('useNoteCard Hook', () => {
       useNoteCard({ note: mockNote, updateNote: mockUpdateNote }),
     );
     const newFile = new File(['new'], 'new.png', { type: 'image/png' });
-    const formData = new FormData();
+    const validatedData = {
+      title: 'Updated Title',
+      content: 'Updated Content',
+    };
 
     // --- 事前準備：まず画像を更新した状態を作る ---
     act(() => {
@@ -112,7 +130,7 @@ describe('useNoteCard Hook', () => {
 
     // --- 実行 ---
     act(() => {
-      result.current.handleFormAction(formData);
+      result.current.onSubmit(validatedData);
     });
 
     // --- 検証 ---
@@ -129,7 +147,10 @@ describe('useNoteCard Hook', () => {
     const { result } = renderHook(() =>
       useNoteCard({ note: mockNote, updateNote: mockUpdateNote }),
     );
-    const formData = new FormData();
+    const validatedData = {
+      title: 'Updated Title',
+      content: 'Updated Content',
+    };
 
     // --- 事前準備：まず画像をクリアした状態を作る ---
     act(() => {
@@ -140,7 +161,7 @@ describe('useNoteCard Hook', () => {
 
     // --- 実行 ---
     act(() => {
-      result.current.handleFormAction(formData);
+      result.current.onSubmit(validatedData);
     });
 
     // --- 検証 ---
@@ -177,7 +198,7 @@ describe('useNoteCard Hook', () => {
   });
 
   // 8. handleCancel関数のテスト
-  it('handleCancelを呼び出すと、isEditingにfalseがセットされること', () => {
+  it('handleCancelを呼び出すと、isEditingがfalseになり、フォームがリセットされること', () => {
     const { result } = renderHook(() =>
       useNoteCard({ note: mockNote, updateNote: mockUpdateNote }),
     );
@@ -195,5 +216,9 @@ describe('useNoteCard Hook', () => {
     });
     // isEditingに'false'が設定されていることの確認
     expect(result.current.isEditing).toBe(false);
+    expect(mockReset).toHaveBeenCalledWith({
+      title: mockNote.title,
+      content: mockNote.content,
+    });
   });
 });

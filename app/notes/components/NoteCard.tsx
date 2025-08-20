@@ -39,8 +39,11 @@ export const NoteCard = ({
     onDrop,
     handleClearImage,
     handleCancel,
-    handleFormAction,
     setIsEditing,
+    register,
+    handleSubmit,
+    onSubmit,
+    errors,
   } = useNoteCard({ note, updateNote });
 
   if (isEditing) {
@@ -52,7 +55,10 @@ export const NoteCard = ({
         onDrop={onDrop}
         handleClearImage={handleClearImage}
         handleCancel={handleCancel}
-        handleFormAction={handleFormAction}
+        register={register}
+        handleSubmit={handleSubmit}
+        onSubmit={onSubmit}
+        errors={errors}
       />
     );
   }
@@ -60,8 +66,8 @@ export const NoteCard = ({
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <Link href={`/notes/${note.id}`} className="hover:underline">
-          <CardTitle>{note.title}</CardTitle>
+        <Link href={`/notes/${note.id}`} className="hover:underline min-w-0">
+          <CardTitle className="truncate">{note.title}</CardTitle>
         </Link>
         <CardDescription>
           {new Date(note.createdAt).toLocaleString('ja-JP')}

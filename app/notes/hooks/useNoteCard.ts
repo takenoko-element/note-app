@@ -4,6 +4,10 @@
 import { Note } from '@/types';
 import { useState, useEffect, useCallback } from 'react';
 
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { noteSchema, NoteFormInput } from '@/lib/validators';
+
 type UseNoteCardProps = {
   note: Note;
   updateNote: (variables: { id: number; formData: FormData }) => void;
@@ -17,6 +21,20 @@ export const useNoteCard = ({ note, updateNote }: UseNoteCardProps) => {
   const [imageAction, setImageAction] = useState<'keep' | 'clear' | 'update'>(
     'keep',
   );
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<NoteFormInput>({
+    resolver: zodResolver(noteSchema),
+    // フォームの初期値を設定
+    defaultValues: {
+      title: note.title,
+      content: note.content,
+    },
+  });
 
   // 編集モード開始/終了時の処理
   useEffect(() => {
@@ -62,10 +80,20 @@ export const useNoteCard = ({ note, updateNote }: UseNoteCardProps) => {
 
   const handleCancel = () => {
     setIsEditing(false);
+
+    reset({
+      title: note.title,
+      content: note.content,
+    });
   };
 
   // フォーム送信時に新しいFileオブジェクトをFormDataに追加する
-  const handleFormAction = (formData: FormData) => {
+  const onSubmit = (data: NoteFormInput) => {
+    const formData = new FormData();
+    formData.append('title', data.title);
+    formData.append('content', data.content);
+    formData.append('imageAction', imageAction);
+
     if (imageAction === 'update' && newImageFile) {
       formData.set('image', newImageFile);
     } else {
@@ -84,7 +112,10 @@ export const useNoteCard = ({ note, updateNote }: UseNoteCardProps) => {
     onDrop,
     handleClearImage,
     handleCancel,
-    handleFormAction,
     setIsEditing,
+    register,
+    handleSubmit,
+    errors,
+    onSubmit,
   };
 };

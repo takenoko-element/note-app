@@ -7,6 +7,8 @@ import type { DropzoneOptions } from 'react-dropzone';
 import { NoteEditForm } from './NoteEditForm';
 import type { Note } from '@/types';
 import { act, ComponentProps } from 'react';
+import { NoteFormInput } from '@/lib/validators';
+import { FieldErrors } from 'react-hook-form';
 
 // --- モジュールのモック設定 ---
 // react-dropzoneをモック化
@@ -66,7 +68,7 @@ describe('NoteEditForm Component', () => {
   const mockOnDrop = vi.fn();
   const mockHandleClearImage = vi.fn();
   const mockHandleCancel = vi.fn();
-  const mockHandleFormAction = vi.fn();
+  const mockOnSubmit = vi.fn();
 
   // すべてのpropsをまとめたオブジェクト
   const defaultProps = {
@@ -76,7 +78,18 @@ describe('NoteEditForm Component', () => {
     onDrop: mockOnDrop,
     handleClearImage: mockHandleClearImage,
     handleCancel: mockHandleCancel,
-    handleFormAction: mockHandleFormAction,
+    register: vi.fn(),
+    handleSubmit:
+      (onSubmit: (data: NoteFormInput) => void) =>
+      async (e?: React.BaseSyntheticEvent) => {
+        if (e) {
+          e.preventDefault();
+        }
+        // バリデーション成功をシミュレートし、ダミーデータでonSubmitを呼び出す
+        await onSubmit({ title: mockNote.title, content: mockNote.content });
+      },
+    onSubmit: mockOnSubmit,
+    errors: {} as FieldErrors<NoteFormInput>, // エラーがない状態
   };
 
   beforeEach(() => {
@@ -138,12 +151,10 @@ describe('NoteEditForm Component', () => {
   });
 
   // 4. 保存ボタンのテスト
-  it('保存ボタンをクリックすると、handleFormActionが呼び出されること', async () => {
+  it('保存ボタンをクリックすると、onSubmitが呼び出されること', async () => {
     render(<NoteEditForm {...defaultProps} />);
     await user.click(screen.getByRole('button', { name: '保存' }));
-    expect(mockHandleFormAction).toHaveBeenCalledTimes(1);
-    // FormDataが渡されていることも確認
-    expect(mockHandleFormAction).toHaveBeenCalledWith(expect.any(FormData));
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
   });
 
   // 5. 画像のクリアボタンのテスト
@@ -224,5 +235,29 @@ describe('NoteEditForm Component', () => {
     expect(screen.getByRole('button', { name: '画像をクリア' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'キャンセル' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '保存' })).toBeDisabled();
+  });
+
+  // 10. エラー表示のテスト
+  it('errorsプロップにエラー情報が含まれている場合、エラーメッセージが表示されること', () => {
+    const errorProps = {
+      ...defaultProps,
+      errors: {
+        title: {
+          type: 'min',
+          message: 'タイトルは必須です。',
+        },
+        content: {
+          type: 'max',
+          message: '内容は1000文字以内で入力してください。',
+        },
+      },
+    };
+
+    render(<NoteEditForm {...errorProps} />);
+
+    expect(screen.getByText('タイトルは必須です。')).toBeInTheDocument();
+    expect(
+      screen.getByText('内容は1000文字以内で入力してください。'),
+    ).toBeInTheDocument();
   });
 });
