@@ -1,8 +1,13 @@
 // app/notes/components/NewNoteForm.tsx
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Loader2, UploadCloud } from 'lucide-react';
 import { default as NextImage } from 'next/image';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useDropzone } from 'react-dropzone';
+
 import {
   Card,
   CardContent,
@@ -13,8 +18,7 @@ import {
 import { Input } from '@/app/components/ui/input';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Button } from '@/app/components/ui/button';
-import { Loader2, UploadCloud } from 'lucide-react';
-import { useDropzone } from 'react-dropzone';
+import { noteSchema, type NoteFormInput } from '@/lib/validators';
 
 type NewNoteFormProps = {
   addNote: (formData: FormData) => void;
@@ -22,7 +26,19 @@ type NewNoteFormProps = {
 };
 
 export const NewNoteForm = ({ addNote, isAdding }: NewNoteFormProps) => {
-  const formRef = useRef<HTMLFormElement>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<NoteFormInput>({
+    resolver: zodResolver(noteSchema),
+    defaultValues: {
+      title: '',
+      content: '',
+    },
+  });
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -57,14 +73,18 @@ export const NewNoteForm = ({ addNote, isAdding }: NewNoteFormProps) => {
   }, [preview]);
 
   // フォームの送信処理
-  const handleFormSubmit = (formData: FormData) => {
-    // 状態に保持している画像ファイルがあれば、FormDataに追加
+  const onSubmit = (data: NoteFormInput) => {
+    const formData = new FormData();
+    // バリデーション済みのデータをFormDataに追加
+    formData.append('title', data.title);
+    formData.append('content', data.content);
+
     if (imageFile) {
       formData.set('image', imageFile);
     }
     addNote(formData);
     // フォームと状態をリセット
-    formRef.current?.reset();
+    reset();
     setImageFile(null);
     setPreview(null);
   };
@@ -80,20 +100,34 @@ export const NewNoteForm = ({ addNote, isAdding }: NewNoteFormProps) => {
       <CardHeader>
         <CardTitle>新しいノートの作成</CardTitle>
       </CardHeader>
-      <form ref={formRef} action={handleFormSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <CardContent className="space-y-4">
-          <Input
-            name="title"
-            placeholder="タイトル"
-            disabled={isAdding}
-            required
-          />
-          <Textarea
-            name="content"
-            placeholder="内容"
-            disabled={isAdding}
-            required
-          />
+          <div>
+            <Input
+              {...register('title')}
+              placeholder="タイトル"
+              disabled={isAdding}
+              aria-invalid={errors.title ? 'true' : 'false'}
+            />
+            {errors.title && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.title.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <Textarea
+              {...register('content')}
+              placeholder="内容"
+              disabled={isAdding}
+              aria-invalid={errors.content ? 'true' : 'false'}
+            />
+            {errors.content && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.content.message}
+              </p>
+            )}
+          </div>
           <div>
             <label className="text-sm font-medium">画像</label>
             <div

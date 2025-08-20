@@ -81,6 +81,11 @@ describe('image.service.ts:saveImageAndGetPath', () => {
 
   // --- 4. アップロードに失敗する場合 ---
   it('画像のアップロードに失敗した場合、エラーをスローする', async () => {
+    // このテストではconsole.errorが意図的に呼ばれるため、出力を一時的に無効化する
+    const mockConsoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
     const testFile = new File(['dummy content'], 'failure.png');
     const uploadError = new Error('Supabase upload failed');
 
@@ -96,6 +101,9 @@ describe('image.service.ts:saveImageAndGetPath', () => {
     );
 
     expect(mockUpload).toHaveBeenCalled();
+
+    // 無効化したconsole.errorを元の状態に戻す
+    mockConsoleError.mockRestore();
   });
 });
 
@@ -131,6 +139,11 @@ describe('image.service.ts:getSignedUrl', () => {
 
   // --- 6. 署名付きURLの生成に失敗する場合 ---
   it('署名付きURLの生成に失敗した場合、nullを返す', async () => {
+    // このテストではconsole.errorが意図的に呼ばれるため、出力を一時的に無効化する
+    const mockConsoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
     const mockFilePath = 'images/mock-path/test.png';
     const signedUrlError = new Error('Signed URL creation failed');
 
@@ -142,6 +155,9 @@ describe('image.service.ts:getSignedUrl', () => {
     const result = await getSignedUrl(mockFilePath);
 
     expect(result).toBeNull();
+
+    // 無効化したconsole.errorを元の状態に戻す
+    mockConsoleError.mockRestore();
   });
 
   // --- 7. ファイルがnullの場合 ---

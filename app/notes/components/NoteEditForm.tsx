@@ -2,6 +2,13 @@
 'use client';
 
 import { default as NextImage } from 'next/image';
+import type {
+  UseFormRegister,
+  FieldErrors,
+  UseFormHandleSubmit,
+} from 'react-hook-form';
+import { useDropzone } from 'react-dropzone';
+
 import {
   Card,
   CardContent,
@@ -12,9 +19,9 @@ import { Input } from '@/app/components/ui/input';
 import { Button } from '@/app/components/ui/button';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Loader2, UploadCloud } from 'lucide-react';
-import { useDropzone } from 'react-dropzone';
 
 import { Note } from '@/types';
+import type { NoteFormInput } from '@/lib/validators';
 
 type NoteEditFormProps = {
   note: Note;
@@ -23,7 +30,10 @@ type NoteEditFormProps = {
   onDrop: (acceptedFiles: File[]) => void;
   handleClearImage: () => void;
   handleCancel: () => void;
-  handleFormAction: (formData: FormData) => void;
+  register: UseFormRegister<NoteFormInput>;
+  handleSubmit: UseFormHandleSubmit<NoteFormInput>;
+  onSubmit: (data: NoteFormInput) => void;
+  errors: FieldErrors<NoteFormInput>;
 };
 
 export const NoteEditForm = ({
@@ -33,7 +43,10 @@ export const NoteEditForm = ({
   onDrop,
   handleClearImage,
   handleCancel,
-  handleFormAction,
+  register,
+  handleSubmit,
+  onSubmit,
+  errors,
 }: NoteEditFormProps) => {
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -42,26 +55,46 @@ export const NoteEditForm = ({
     noClick: false, // Dropzone自体をクリックしてもダイアログが開かないようにする
     noKeyboard: true, // キーボード操作でもダイアログが開かないようにする
   });
+
   return (
     <Card className="flex flex-col h-full">
-      <form action={handleFormAction} className="flex flex-col flex-grow gap-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col flex-grow gap-4"
+      >
         <CardHeader>
-          <Input
-            name="title"
-            defaultValue={note.title}
-            className="text-lg font-bold"
-            disabled={isUpdating}
-            required
-          />
+          <div>
+            <Input
+              {...register('title')}
+              placeholder="タイトル"
+              defaultValue={note.title}
+              className="text-lg font-bold"
+              disabled={isUpdating}
+              aria-invalid={errors.title ? 'true' : 'false'}
+            />
+            {errors.title && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.title.message}
+              </p>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="flex-grow">
-          <Textarea
-            name="content"
-            defaultValue={note.content}
-            className="whitespace-pre-wrap min-h-[100px]"
-            disabled={isUpdating}
-            required
-          />
+          <div>
+            <Textarea
+              {...register('content')}
+              placeholder="内容"
+              defaultValue={note.content}
+              className="whitespace-pre-wrap min-h-[100px]"
+              disabled={isUpdating}
+              aria-invalid={errors.content ? 'true' : 'false'}
+            />
+            {errors.content && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.content.message}
+              </p>
+            )}
+          </div>
           <div>
             <label className="text-sm font-medium">画像</label>
             <div

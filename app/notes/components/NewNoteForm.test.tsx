@@ -1,5 +1,5 @@
 // app/notes/components/NewNoteForm.test.tsx
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
@@ -72,14 +72,16 @@ describe('NewNoteForm', () => {
     await user.click(submitButton);
 
     // --- 結果の検証 ---
-    // addNote関数が1回だけ呼び出されたことを確認
-    expect(mockAddNote).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      // addNote関数が1回だけ呼び出されたことを確認
+      expect(mockAddNote).toHaveBeenCalledTimes(1);
 
-    // addNote関数に渡された引数（FormData）をチェックする
-    // getMockCallsで呼び出し時の引数を取得できる
-    const formData = mockAddNote.mock.calls[0][0] as FormData;
-    expect(formData.get('title')).toBe('新しいテストタイトル');
-    expect(formData.get('content')).toBe('新しいテスト内容です。');
+      // addNote関数に渡された引数（FormData）をチェックする
+      // getMockCallsで呼び出し時の引数を取得できる
+      const formData = mockAddNote.mock.calls[0][0] as FormData;
+      expect(formData.get('title')).toBe('新しいテストタイトル');
+      expect(formData.get('content')).toBe('新しいテスト内容です。');
+    });
   });
 
   // 3. 送信中の状態のテスト
@@ -92,16 +94,15 @@ describe('NewNoteForm', () => {
     expect(screen.getByRole('button', { name: '作成' })).toBeDisabled();
   });
 
-  // 4. バリデーションのテスト（必須入力チェック）
-  it('タイトルが未入力のまま作成ボタンを押しても、addNote関数は呼び出されないこと', async () => {
+  // 4. バリデーションのテスト
+  it('何も入力せずに作成ボタンを押すと、エラーメッセージが表示され、addNoteは呼び出されないこと', async () => {
     render(<NewNoteForm addNote={mockAddNote} isAdding={false} />);
+    const submitButton = screen.getByRole('button', { name: '作成' });
 
-    // 内容だけ入力する
-    await user.type(screen.getByPlaceholderText('内容'), '内容は入力済み');
-    // 作成ボタンをクリック
-    await user.click(screen.getByRole('button', { name: '作成' }));
+    await user.click(submitButton);
+    expect(await screen.findByText('タイトルは必須です。')).toBeInTheDocument();
+    expect(await screen.findByText('内容は必須です。')).toBeInTheDocument();
 
-    // HTMLのrequired属性によるブラウザの標準バリデーションが機能するため、
     // addNote関数は呼び出されないはず
     expect(mockAddNote).not.toHaveBeenCalled();
   });
