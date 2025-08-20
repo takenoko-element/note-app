@@ -11,7 +11,7 @@ export const noteSchema = z.object({
   content: z
     .string()
     .min(1, { message: '内容は必須です。' })
-    .max(300, { message: '内容は1000文字以内で入力してください。' }),
+    .max(300, { message: '内容は300文字以内で入力してください。' }),
 });
 
 export type NoteFormInput = z.infer<typeof noteSchema>;
