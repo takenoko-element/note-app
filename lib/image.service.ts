@@ -23,7 +23,13 @@ export const saveImageAndGetPath = async (
     env.SUPABASE_SERVICE_ROLE_KEY,
   );
 
-  const filePath = `images/${Date.now()}_${file.name}`;
+  // ファイル名を安全な形式に変換(日本語やスペースなどを避ける)
+  const originalName = file.name;
+  // UUID＋拡張子
+  const ext = originalName.split('.').pop();
+  const safeFileName = `${crypto.randomUUID()}.${ext}`;
+
+  const filePath = `images/${Date.now()}_${safeFileName}`;
 
   // Supabase Storageに管理者権限でアップロード
   const { data, error } = await supabaseAdmin.storage
